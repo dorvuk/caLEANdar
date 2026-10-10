@@ -13,6 +13,7 @@ import { CourseDialog, CreateDialog, EventDialog } from './EditDialogs';
 import { ConfigDialog, ExportDialog, ImportDialog, SettingsDialog } from './UtilityDialogs';
 import { Icon } from './shared';
 import sample from '../../samples/fri-sample.ics?raw';
+import brandLogo from '../../assets/transp.png';
 
 type Dialog = { kind: 'create'; day: string; selection?: { start: string; end: string }; courseId?: string } | { kind: 'event'; event: Occurrence; proposed?: { start: string; end: string } } | { kind: 'course'; id: string } | { kind: 'import' | 'config'; file: { name: string; content: string } } | { kind: 'settings'; tab?: string } | { kind: 'export' };
 export default function App() {
@@ -68,13 +69,13 @@ export default function App() {
   const weekTitle = first.month === last.month && first.year === last.year ? `${first.toFormat('d')}–${last.toFormat('d MMMM yyyy')}` : `${first.toFormat(first.year === last.year ? 'd MMM' : 'd MMM yyyy')} – ${last.toFormat('d MMM yyyy')}`;
   const title = view === 'dayGridMonth' ? date(anchor).toFormat('MMMM yyyy') : view === 'timeGridDay' ? date(anchor).toFormat('d MMMM yyyy') : weekTitle;
   const style = { '--accent': state.settings.accent, '--font-size': `${state.settings.fontSize}px`, '--ui-scale': state.settings.fontSize / 14, '--event-font-size': `${state.settings.eventFontSize}px` } as CSSProperties;
-  if (!ready) return <div className="loading"><Icon name="calendar" size={32} /><p>Opening your calendar…</p></div>;
+  if (!ready) return <div className="loading"><img className="loading-logo" src={brandLogo} alt="caLEANdar" /><p>Opening your calendar…</p></div>;
   return <div className={`app ${state.settings.theme} ${state.settings.font} ${state.settings.density}`} style={style}
     onDragOver={e => { if (!desktop && e.dataTransfer.types.includes('Files')) { e.preventDefault(); setDragging(true); } }}
     onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragging(false); }}
     onDrop={async e => { if (desktop) return; e.preventDefault(); setDragging(false); const file = e.dataTransfer.files[0]; if (file) { if (file.size > 40_000_000) { setError('Files must be smaller than 40 MB.'); return; } acceptFile({ name: file.name, content: await file.text() }); } }}>
     <aside className="sidebar">
-      <div className="brand"><div className="brand-icon"><Icon name="calendar" size={21} /></div><span>ca<span className="brand-lean">LEAN</span>dar<span className="brand-dot">.</span></span></div>
+      <div className="brand"><img className="brand-icon" src={brandLogo} alt="" /><span>ca<span className="brand-lean">LEAN</span>dar<span className="brand-dot">.</span></span></div>
       <div className="tagline">A LITTLE ORDER.</div>
       <button className="primary add-course" title="New course (N)" onClick={() => setDialog({ kind: 'create', day: anchor })}>New course</button>
       <MiniCalendar selected={anchor} onSelect={goTo} today={today(state.settings.timezone)} firstDay={state.settings.firstDay} />

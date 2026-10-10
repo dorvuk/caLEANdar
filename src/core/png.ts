@@ -4,6 +4,7 @@ import { eventLabels } from './labels';
 import type { AppState, Occurrence } from './model';
 import { courseColors } from './colors';
 import pixelFont from '../assets/fonts/PixelifySans.ttf?url&inline';
+import brandLogo from '../../assets/transp.png?url&inline';
 
 export interface PngOptions { week: string; generic: boolean; weekends: boolean; minTime: string; maxTime: string; scale: number }
 export interface Segment { event: Occurrence; day: number; start: number; end: number; lane: number; lanes: number }
@@ -67,7 +68,7 @@ export function renderTimetableSvg(state: AppState, options: PngOptions): { svg:
   const family = state.settings.font === 'mono' ? 'Pixelify Sans, sans-serif' : 'Arial, sans-serif';
   const eventColors = (e: Occurrence) => { const color = state.courses.find(c => c.id === e.courseId)?.color; return color ? courseColors(color, state.settings.theme === 'dark') : { background: surface, border: accent }; };
   const out: string[] = [`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${fontStyle}<rect width="100%" height="100%" fill="${bg}"/><g font-family="${family}" fill="${text}">`];
-  out.push(`<rect x="24" y="26" width="10" height="10" fill="${accent}"/><text x="46" y="38" font-size="18" font-weight="bold">caLEANdar</text>`);
+  out.push(`${state.settings.theme === 'dark' ? '<rect x="24" y="16" width="28" height="28" fill="#ffd0d7"/>' : ''}<image x="24" y="16" width="28" height="28" href="${brandLogo}" style="image-rendering:pixelated"/><text x="62" y="38" font-size="18" font-weight="bold">caLEANdar</text>`);
   const heading = options.generic ? 'Your regular week' : `${date(first).toFormat('d MMM')} – ${date(addDays(first, 6)).toFormat('d MMM yyyy')}`;
   out.push(`<text x="24" y="78" font-size="27" font-weight="bold">${xml(heading)}</text>`);
   out.push(`<text x="24" y="105" font-size="12">${xml(options.generic ? 'Regular sessions · one-off events and individual exceptions excluded · pattern at selected date' : `ISO week ${date(first).weekNumber} · ${state.settings.timezone} · personalized schedule`)}</text>`);

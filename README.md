@@ -1,5 +1,7 @@
 # caLEANdar
 
+This is completely vibe-coded but it helps me organize my classes :)
+
 A local-first university calendar for Windows and macOS. A quiet, monochrome interface with a scheduling engine that keeps recurring edits predictable and reversible. No accounts, cloud, telemetry, or runtime server.
 
 ## Run it
@@ -7,12 +9,14 @@ A local-first university calendar for Windows and macOS. A quiet, monochrome int
 On this Windows machine, the built installer is:
 
 ```
-src-tauri/target/release/bundle/nsis/caLEANdar_1.0.1_x64-setup.exe
+src-tauri/target/release/bundle/nsis/caLEANdar_1.0.2_x64-setup.exe
 ```
 
 The standalone application is `src-tauri/target/release/caleandar.exe`. The application needs the Microsoft WebView2 runtime, normally present on Windows 10/11. The installer includes the bootstrapper for machines that need it; installing a missing runtime requires an internet connection. Once the runtime is installed, caLEANdar runs completely offline.
 
 The first launch opens an empty calendar. Select **Preview the sample timetable** to try a synthetic winter timetable, including a source exception and individually listed weekly classes. The same file is at [samples/fri-sample.ics](samples/fri-sample.ics). Its courses and instructors are illustrative.
+
+Branding comes from [assets/opaq.png](assets/opaq.png) for desktop icons and the browser favicon, and [assets/transp.png](assets/transp.png) for the sidebar, loading/empty states, and PNG exports. Regenerate platform icons after replacing the opaque asset with `npm run tauri -- icon assets/opaq.png`.
 
 ## Develop and build
 

@@ -10,6 +10,7 @@ import { academicInfo, addDays, date, slovenianHoliday, today } from '../core/da
 import { eventLabels } from '../core/labels';
 import type { AppState, Occurrence } from '../core/model';
 import { courseColors } from '../core/colors';
+import brandLogo from '../../assets/transp.png';
 
 export default function Calendar({ state, range, calendarRef, onDates, onEvent, onCreate, onMove }: {
   state: AppState; range: { start: string; end: string }; calendarRef: RefObject<FullCalendar | null>;
@@ -68,6 +69,6 @@ export default function Calendar({ state, range, calendarRef, onDates, onEvent, 
         const holiday = settings.publicHolidays && slovenianHoliday(day); if (holiday) arg.el.title = holiday;
       }}
     />
-    {!state.courses.some(c => c.visible && !c.deleted) && <div className="empty-calendar"><div className="empty-pixels">▦</div><h3>A little room for your week.</h3><p>Import your timetable or add your first course.</p><small>Select a time on the calendar to get started.</small></div>}
+    {!state.courses.some(c => c.visible && !c.deleted) && <div className="empty-calendar"><img className="empty-logo" src={brandLogo} alt="" /><h3>A little room for your week.</h3><p>Import your timetable or add your first course.</p><small>Select a time on the calendar to get started.</small></div>}
   </div>;
 }

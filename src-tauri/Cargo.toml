@@ -1,6 +1,6 @@
 [package]
 name = "caleandar"
-version = "1.0.1"
+version = "1.0.2"
 description = "A local-first university calendar"
 authors = ["caLEANdar"]
 edition = "2021"
