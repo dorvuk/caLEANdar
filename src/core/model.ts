@@ -12,7 +12,7 @@ export interface OccurrenceOverride extends Partial<Metadata> {
 }
 export interface Course {
   id: string; name: string; importedName?: string; label: string; type: string;
-  location: string; instructor: string; notes: string; visible: boolean; deleted?: boolean; color?: string; grouped?: boolean;
+  location: string; instructor: string; notes: string; visible: boolean; deleted?: boolean; color?: string; grouped?: boolean; autoGroup?: boolean;
 }
 export interface Baseline { uid: string; ical: string; removed?: boolean }
 export interface Session {

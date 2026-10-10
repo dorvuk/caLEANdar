@@ -1,6 +1,7 @@
 import { invoke, isTauri } from '@tauri-apps/api/core';
 import { emptyState, type AppState } from '../core/model';
 import { parseConfig, serializeConfig, validateConfig } from '../core/config';
+import { autoGroupCourses } from '../core/courses';
 
 interface Snapshot { content: string | null; revision: number }
 export interface Backup { id: number; createdAt: string; reason: string }
@@ -9,13 +10,19 @@ const storageKey = 'caleandar.preview.v1';
 const backupKey = 'caleandar.preview.backups.v1';
 let revision = 0;
 export const desktop = isTauri();
-export async function loadState(): Promise<AppState> {
+let loading: Promise<AppState> | undefined;
+export function loadState(): Promise<AppState> {
+  return loading ??= readState().finally(() => { loading = undefined; });
+}
+async function readState(): Promise<AppState> {
+  let snapshot: Snapshot;
   if (desktop) {
-    const snapshot = await invoke<Snapshot>('load_state'); revision = snapshot.revision;
-    return snapshot.content ? parseConfig(snapshot.content) : emptyState();
-  }
-  const snapshot: Snapshot = JSON.parse(localStorage.getItem(storageKey) ?? '{"content":null,"revision":0}');
-  revision = snapshot.revision; return snapshot.content ? parseConfig(snapshot.content) : emptyState();
+    snapshot = await invoke<Snapshot>('load_state');
+  } else snapshot = JSON.parse(localStorage.getItem(storageKey) ?? '{"content":null,"revision":0}');
+  revision = snapshot.revision;
+  const state = snapshot.content ? parseConfig(snapshot.content) : emptyState(), grouped = autoGroupCourses(state);
+  if (grouped !== state) await saveState(grouped, 'Automatically group matching course names');
+  return grouped;
 }
 export async function saveState(state: AppState, reason = 'Edit'): Promise<void> {
   validateConfig(state); const content = JSON.stringify(state);

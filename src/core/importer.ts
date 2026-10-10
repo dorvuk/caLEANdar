@@ -2,6 +2,7 @@ import ICAL from 'ical.js';
 import type { AppState, Baseline, Session } from './model';
 import { uid } from './model';
 import { baselineEvent, prepareCalendar, stringProp, timeToDate } from './ical';
+import { autoGroupCourses } from './courses';
 
 export interface ImportGroup { name: string; baselines: Baseline[]; existingSessionId?: string }
 export interface ImportPreview {
@@ -147,22 +148,28 @@ export function applyImport(state: AppState, preview: ImportPreview): AppState {
       const known = new Set(existing.baselines.map(b => b.uid));
       existing.baselines.push(...group.baselines.filter(b => !known.has(b.uid))); existing.removed = false;
       const course = next.courses.find(c => c.id === existing.courseId)!;
-      if (!course.grouped) {
+      if (!course.grouped && course.autoGroup !== false) {
         if (course.name === course.importedName) course.name = group.name;
         course.importedName = group.name;
       }
     } else {
       const courseId = uid();
-      next.courses.push({ id: courseId, name: group.name, importedName: group.name, label: '', type: inferType(group.name), location: '', instructor: '', notes: '', visible: true });
+      const event = baselineEvent(group.baselines[0], next.settings.timezone);
+      const type = inferType(group.name, event.component.getAllProperties('categories').flatMap(p => p.getValues()).map(String), next.settings.types);
+      next.courses.push({ id: courseId, name: group.name, importedName: group.name, label: '', type, location: '', instructor: '', notes: '', visible: true });
       const session: Session = { id: uid(), courseId, sourceId: source.id, baselines: group.baselines, overrides: [] };
       next.sessions.push(session);
     }
   }
-  return next;
+  return autoGroupCourses(next);
 }
-function inferType(name: string) {
-  if (/lab|laborator|\bLV\b/i.test(name)) return 'Laboratory';
-  if (/tutorial|vaje|\bAV\b/i.test(name)) return 'Tutorial';
-  if (/exam|izpit/i.test(name)) return 'Exam';
-  return 'Lecture';
+function inferType(name: string, categories: string[], types: string[]) {
+  const infer = (text: string) => {
+    if (/\blabs?\b|\blaborator|\bLV\b/i.test(text)) return 'Laboratory';
+    if (/\btutorials?\b|\bvaje\b|\bAV\b/i.test(text)) return 'Tutorial';
+    if (/\bexams?\b|\bizpit\b/i.test(text)) return 'Exam';
+    if (/\blectures?\b|\bpredavanja\b/i.test(text)) return 'Lecture';
+    return types.find(t => t.toLowerCase() === text.trim().toLowerCase());
+  };
+  return categories.map(infer).find(Boolean) ?? infer(name) ?? 'Lecture';
 }

@@ -46,30 +46,41 @@ test('calendar selection preserves long and short durations; pixel font, compact
   await page.getByRole('button', { name: 'Close dialog' }).click();
   await page.screenshot({ path: 'test-results/refined-calendar.png', fullPage: true });
 });
-test('course colors and grouping preserve lecture/lab types, reimport identities and JSON transfer', async ({ page }) => {
+test('automatic grouping, ungrouping and manual regrouping retain course colors and types through reimport and transfer', async ({ page }) => {
   await sample(page);
   const sidebar = page.locator('.course-list');
-  await sidebar.getByRole('button', { name: /Algorithms — Lectures/ }).click();
+  const group = sidebar.getByRole('button', { name: /^Algorithms\s*LEC\s*LAB$/ });
+  await expect(group).toHaveCount(1);
+  await group.click();
   await page.getByLabel('Course color hex').fill('#9158ba');
   await page.getByRole('button', { name: 'Save course', exact: true }).click();
-  const beforeColor = await page.locator('.fc-event').filter({ hasText: 'Algorithms — Lectures' }).evaluate(el => getComputedStyle(el).borderColor);
+  const beforeColor = await page.locator('.fc-event').filter({ hasText: 'Algorithms' }).filter({ hasText: 'Lecture' }).evaluate(el => getComputedStyle(el).borderColor);
   expect(beforeColor).not.toBe('rgb(48, 76, 63)');
-  await sidebar.getByRole('button', { name: /Algorithms — Lectures/ }).click();
+  await group.click();
+  await page.getByRole('button', { name: 'Ungroup course', exact: true }).click();
+  const lecture = sidebar.getByRole('button', { name: /^Algorithms · Lecture\s*LEC$/ });
+  const lab = sidebar.getByRole('button', { name: /^Algorithms · Laboratory\s*LAB$/ });
+  await expect(lecture).toHaveCount(1); await expect(lab).toHaveCount(1);
+  await page.reload();
+  await page.getByRole('button', { name: 'Jump to date', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Jump to date' }).fill('2026-10-05');
+  await expect(lecture).toHaveCount(1); await expect(lab).toHaveCount(1);
+  const updated = await page.evaluate(() => JSON.parse(JSON.parse(localStorage.getItem('caleandar.preview.v1')!).content).sources[0].content.replaceAll('LOCATION:P01 · FRI', 'LOCATION:R99 · FRI'));
+  await page.evaluate(content => { const transfer = new DataTransfer(); transfer.items.add(new File([content], 'fri-sample.ics')); document.querySelector('.app')!.dispatchEvent(new DragEvent('drop', { dataTransfer: transfer, bubbles: true })); }, updated);
+  await page.getByRole('dialog').getByRole('button', { name: 'Import timetable', exact: true }).click();
+  await expect(lecture).toHaveCount(1); await expect(lab).toHaveCount(1);
+  await lecture.click();
   await page.getByText('Group lectures, labs & tutorials', { exact: true }).click();
   await page.getByLabel('Group name').fill('Algorithms');
-  await page.locator('.group-course-options').getByRole('checkbox', { name: /Algorithms — Laboratory/ }).check();
+  await page.locator('.group-course-options').getByRole('checkbox', { name: /Algorithms · Laboratory/ }).check();
   await page.getByRole('button', { name: 'Group selected courses', exact: true }).click();
-  await expect(sidebar.getByRole('button', { name: /Algorithms — Laboratory/ })).toHaveCount(0);
-  const group = sidebar.getByRole('button', { name: /^Algorithms\s*LEC\s*LAB$/ });
+  await expect(lab).toHaveCount(0);
   await expect(group).toHaveCount(1);
   const events = page.locator('.fc-event').filter({ hasText: 'Algorithms' });
   await expect(events).toHaveCount(2);
   await expect(events.filter({ hasText: 'Laboratory' })).toHaveCount(1);
   await expect(events.filter({ hasText: 'Lecture' })).toHaveCount(1);
   expect(await events.last().evaluate(el => getComputedStyle(el).borderColor)).toBe(beforeColor);
-  const updated = await page.evaluate(() => JSON.parse(JSON.parse(localStorage.getItem('caleandar.preview.v1')!).content).sources[0].content.replaceAll('LOCATION:P01 · FRI', 'LOCATION:R99 · FRI'));
-  await page.evaluate(content => { const transfer = new DataTransfer(); transfer.items.add(new File([content], 'fri-sample.ics')); document.querySelector('.app')!.dispatchEvent(new DragEvent('drop', { dataTransfer: transfer, bubbles: true })); }, updated);
-  await page.getByRole('dialog').getByRole('button', { name: 'Import timetable', exact: true }).click();
   await expect(events).toHaveCount(2); await expect(group).toHaveCount(1);
   await expect(events.filter({ hasText: 'Lecture' })).toContainText('R99');
   await page.getByRole('button', { name: 'Settings & data' }).click(); await page.getByRole('tab', { name: 'Recovery' }).click();
@@ -84,4 +95,54 @@ test('course colors and grouping preserve lecture/lab types, reimport identities
   await page.getByRole('button', { name: 'Jump to date', exact: true }).click(); await page.getByRole('textbox', { name: 'Jump to date' }).fill('2026-10-05');
   await expect(events).toHaveCount(2); await expect(group).toHaveCount(1);
   expect(await events.first().evaluate(el => getComputedStyle(el).borderColor)).toBe(beforeColor);
+});
+
+test('toggling weekly repeat retains the chosen final date and complete recurring range', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'New course', exact: true }).click();
+  await page.getByLabel('Course or activity name').fill('Repeat toggle regression');
+  await page.getByLabel('First session').fill('2026-10-12');
+  await page.getByLabel('Last eligible date').fill('2027-02-12');
+  await page.getByLabel('Starts', { exact: true }).fill('10:00');
+  await page.getByLabel('Ends', { exact: true }).fill('12:00');
+  const weekly = page.getByRole('checkbox', { name: 'Repeat every week', exact: true });
+  await weekly.uncheck();
+  await expect(page.getByLabel('Date', { exact: true })).toHaveValue('2026-10-12');
+  await page.getByLabel('Date', { exact: true }).fill('2026-10-19');
+  await weekly.check();
+  await expect(page.getByLabel('Last eligible date')).toHaveValue('2027-02-12');
+  await weekly.uncheck(); await weekly.check();
+  await expect(page.getByLabel('Last eligible date')).toHaveValue('2027-02-12');
+  await expect(page.getByLabel('First session')).toHaveValue('2026-10-19');
+  await expect(page.getByLabel('Starts', { exact: true })).toHaveValue('10:00');
+  await expect(page.getByLabel('Ends', { exact: true })).toHaveValue('12:00');
+  await page.getByRole('button', { name: 'Add to my calendar', exact: true }).click();
+  await page.getByRole('button', { name: 'Jump to date', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Jump to date' }).fill('2027-02-08');
+  await expect(page.locator('.fc-event').filter({ hasText: 'Repeat toggle regression' })).toContainText('10:00–12:00');
+});
+
+test('existing saved lecture and lab courses group on upgrade with a recoverable snapshot', async ({ page }) => {
+  await sample(page);
+  await page.evaluate(() => {
+    const stored = JSON.parse(localStorage.getItem('caleandar.preview.v1')!);
+    const state = JSON.parse(stored.content);
+    const lecture = state.courses.find((c: { name: string; deleted?: boolean }) => c.name === 'Algorithms' && !c.deleted);
+    const lab = state.courses.find((c: { importedName?: string }) => c.importedName === 'Algorithms — Laboratory');
+    lecture.name = lecture.importedName; delete lecture.grouped; delete lecture.autoGroup;
+    lab.deleted = false; lecture.color = '#9158ba';
+    for (const session of state.sessions.filter((s: { courseId: string }) => s.courseId === lecture.id)) {
+      if (session.type === 'Laboratory') session.courseId = lab.id;
+      delete session.type;
+    }
+    localStorage.setItem('caleandar.preview.v1', JSON.stringify({ ...stored, content: JSON.stringify(state) }));
+    localStorage.removeItem('caleandar.preview.backups.v1');
+  });
+  await page.reload();
+  await expect(page.locator('.course-list').getByRole('button', { name: /^Algorithms\s*LEC\s*LAB$/ })).toHaveCount(1);
+  const saved = await page.evaluate(() => JSON.parse(JSON.parse(localStorage.getItem('caleandar.preview.v1')!).content));
+  expect(saved.courses.filter((c: { deleted?: boolean }) => !c.deleted)).toHaveLength(5);
+  expect(saved.courses.find((c: { name: string; deleted?: boolean }) => c.name === 'Algorithms' && !c.deleted).color).toBe('#9158ba');
+  const reasons = await page.evaluate(() => JSON.parse(localStorage.getItem('caleandar.preview.backups.v1')!).map((b: { reason: string }) => b.reason));
+  expect(reasons).toEqual(['Automatically group matching course names']);
 });

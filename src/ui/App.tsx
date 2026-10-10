@@ -8,7 +8,7 @@ import { desktop, loadState, openFile, readDrop, saveState } from '../platform/s
 import Calendar from './Calendar';
 import MiniCalendar from './MiniCalendar';
 import DateNavigation from './DateNavigation';
-import { courseTypes } from '../core/courses';
+import { autoGroupCourses, courseTypes } from '../core/courses';
 import { CourseDialog, CreateDialog, EventDialog } from './EditDialogs';
 import { ConfigDialog, ExportDialog, ImportDialog, SettingsDialog } from './UtilityDialogs';
 import { Icon } from './shared';
@@ -29,7 +29,7 @@ export default function App() {
   const commit = useCallback(async (next: AppState, reason: string) => {
     if (pendingSave.current) throw new Error('Another change is being saved. Try again in a moment.');
     pendingSave.current = true; setSaving(true);
-    try { await saveState(next, reason); setState(next); setError(''); setNotice('Saved locally.'); }
+    try { const grouped = autoGroupCourses(next); await saveState(grouped, reason); setState(grouped); setError(''); setNotice('Saved locally.'); }
     finally { pendingSave.current = false; setSaving(false); }
   }, []);
   function acceptFile(file: { name: string; content: string }) { setDialog({ kind: file.name.toLowerCase().endsWith('.json') ? 'config' : 'import', file }); }

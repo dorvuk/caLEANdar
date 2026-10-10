@@ -4,6 +4,7 @@ import { addDays, date, isTeachingDay, monday, wallTime } from './dates';
 import { baselineEvent, keyForTime, stringProp, timeToDate } from './ical';
 import { exceptionId, uid } from './model';
 import type { AppState, Baseline, Course, Metadata, Occurrence, SchedulePatch, Session } from './model';
+import { autoGroupCourses } from './courses';
 
 interface Candidate extends Metadata {
   key: string; originalDate: string; originalStart: string; start: string; end: string; allDay: boolean; cancelled: boolean;
@@ -296,7 +297,7 @@ export function createCourse(state: AppState, input: NewCourseInput): AppState {
     if (times.length) { excluded.setValues(times); excluded.setParameter('tzid', zone); event.component.addProperty(excluded); }
   }
   next.sessions.push({ id: sessionId, courseId, ...(input.courseId ? { type: input.type } : {}), baselines: [{ uid: eventUid, ical: calendar.toString() }], overrides: [] });
-  return next;
+  return autoGroupCourses(next);
 }
 export function genericWeek(state: AppState, referenceDate: string): Occurrence[] {
   const from = monday(referenceDate), next = structuredClone(state);
