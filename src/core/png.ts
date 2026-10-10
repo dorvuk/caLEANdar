@@ -2,6 +2,8 @@ import { addDays, date, monday } from './dates';
 import { expandCalendar, genericWeek } from './engine';
 import { eventLabels } from './labels';
 import type { AppState, Occurrence } from './model';
+import { courseColors } from './colors';
+import pixelFont from '../assets/fonts/PixelifySans.ttf?url&inline';
 
 export interface PngOptions { week: string; generic: boolean; weekends: boolean; minTime: string; maxTime: string; scale: number }
 export interface Segment { event: Occurrence; day: number; start: number; end: number; lane: number; lanes: number }
@@ -61,7 +63,10 @@ export function renderTimetableSvg(state: AppState, options: PngOptions): { svg:
   if (height > 16_000) throw new Error('These labels need a very tall image. Use shorter labels, a smaller event font, or export a narrower time range.');
   const accent = state.settings.accent, text = state.settings.theme === 'dark' ? '#eef2eb' : '#1c2922', bg = state.settings.theme === 'dark' ? '#171e1a' : '#fafbf7';
   const surface = state.settings.theme === 'dark' ? '#252f28' : '#eef2e9', stroke = state.settings.theme === 'dark' ? '#4c5c51' : '#cdd5c8';
-  const out: string[] = [`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="100%" height="100%" fill="${bg}"/><g font-family="Consolas, Menlo, monospace" fill="${text}">`];
+  const fontStyle = state.settings.font === 'mono' ? `<style>@font-face { font-family: 'Pixelify Sans'; src: url('${pixelFont}') format('truetype'); font-weight: 400 700; }</style>` : '';
+  const family = state.settings.font === 'mono' ? 'Pixelify Sans, sans-serif' : 'Arial, sans-serif';
+  const eventColors = (e: Occurrence) => { const color = state.courses.find(c => c.id === e.courseId)?.color; return color ? courseColors(color, state.settings.theme === 'dark') : { background: surface, border: accent }; };
+  const out: string[] = [`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${fontStyle}<rect width="100%" height="100%" fill="${bg}"/><g font-family="${family}" fill="${text}">`];
   out.push(`<rect x="24" y="26" width="10" height="10" fill="${accent}"/><text x="46" y="38" font-size="18" font-weight="bold">caLEANdar</text>`);
   const heading = options.generic ? 'Your regular week' : `${date(first).toFormat('d MMM')} – ${date(addDays(first, 6)).toFormat('d MMM yyyy')}`;
   out.push(`<text x="24" y="78" font-size="27" font-weight="bold">${xml(heading)}</text>`);
@@ -72,7 +77,8 @@ export function renderTimetableSvg(state: AppState, options: PngOptions): { svg:
     out.push(`<path d="M${x} 122V${height - 48}" stroke="${stroke}" fill="none"/>`);
     allDays.filter(e => e.start.slice(0, 10) <= day.toISODate()! && e.end.slice(0, 10) > day.toISODate()!).forEach((e, row) => {
       const y = top + row * allDayHeight + 3;
-      out.push(`<rect x="${x + 4}" y="${y}" width="${col - 8}" height="${allDayHeight - 6}" fill="${surface}" stroke="${accent}"/>`);
+      const colors = eventColors(e);
+      out.push(`<rect x="${x + 4}" y="${y}" width="${col - 8}" height="${allDayHeight - 6}" fill="${colors.background}" stroke="${colors.border}"/>`);
       const labels = eventLabels(e, state).flatMap(l => wrap(l, col - 26, font));
       labels.forEach((label, i) => out.push(`<text x="${x + 10}" y="${y + font + 5 + i * lineHeight}" font-size="${font}">${xml(label)}</text>`));
     });
@@ -89,7 +95,8 @@ export function renderTimetableSvg(state: AppState, options: PngOptions): { svg:
     const x = left + s.day * col + s.lane * col / s.lanes + 4, y = gridTop + (s.start - startMinute) * px + 2;
     const w = col / s.lanes - 8, h = Math.max(12, (s.end - s.start) * px - 4);
     out.push(`<defs><clipPath id="clip${idx}"><rect x="${x + 7}" y="${y + 3}" width="${Math.max(1, w - 14)}" height="${Math.max(1, h - 6)}"/></clipPath></defs>`);
-    out.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${surface}" stroke="${accent}"/><rect x="${x}" y="${y}" width="3" height="${h}" fill="${accent}"/><g clip-path="url(#clip${idx})">`);
+    const colors = eventColors(s.event);
+    out.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${colors.background}" stroke="${colors.border}"/><rect x="${x}" y="${y}" width="3" height="${h}" fill="${colors.border}"/><g clip-path="url(#clip${idx})">`);
     let line = 0;
     for (const [index, label] of eventLabels(s.event, state).entries()) {
       const lines = wrap(label, w - 18, font);

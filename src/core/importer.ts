@@ -147,8 +147,10 @@ export function applyImport(state: AppState, preview: ImportPreview): AppState {
       const known = new Set(existing.baselines.map(b => b.uid));
       existing.baselines.push(...group.baselines.filter(b => !known.has(b.uid))); existing.removed = false;
       const course = next.courses.find(c => c.id === existing.courseId)!;
-      if (course.name === course.importedName) course.name = group.name;
-      course.importedName = group.name;
+      if (!course.grouped) {
+        if (course.name === course.importedName) course.name = group.name;
+        course.importedName = group.name;
+      }
     } else {
       const courseId = uid();
       next.courses.push({ id: courseId, name: group.name, importedName: group.name, label: '', type: inferType(group.name), location: '', instructor: '', notes: '', visible: true });

@@ -12,13 +12,13 @@ export interface OccurrenceOverride extends Partial<Metadata> {
 }
 export interface Course {
   id: string; name: string; importedName?: string; label: string; type: string;
-  location: string; instructor: string; notes: string; visible: boolean; deleted?: boolean;
+  location: string; instructor: string; notes: string; visible: boolean; deleted?: boolean; color?: string; grouped?: boolean;
 }
 export interface Baseline { uid: string; ical: string; removed?: boolean }
 export interface Session {
   id: string; courseId: string; sourceId?: string; baselines: Baseline[];
   overrides: SeriesOverride[]; deleted?: boolean; removed?: boolean;
-  weekdays?: number[];
+  weekdays?: number[]; type?: string;
 }
 export interface Extra extends Metadata {
   id: string; sessionId: string; start: string; end: string; allDay: boolean;

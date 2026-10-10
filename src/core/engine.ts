@@ -113,7 +113,7 @@ function renderCandidate(state: AppState, session: Session, course: Course, c: C
     end = date(wallTime(endDay, patch.endTime, zone), zone);
   }
   const fields: Metadata = {
-    title: course.name !== course.importedName ? course.name : c.title,
+    title: course.grouped || course.name !== course.importedName ? course.name : c.title,
     location: course.location || c.location, instructor: course.instructor || c.instructor, notes: course.notes || c.notes,
   };
   for (const k of ['title', 'location', 'instructor', 'notes'] as const) {
@@ -272,18 +272,18 @@ export function sessionRange(session: Session, zone: string): { from: string; to
   }
   return { from: starts.sort()[0] ?? '2026-10-01', to: ends.sort().at(-1) ?? '2027-01-15' };
 }
-export interface NewCourseInput extends Metadata { label: string; type: string; date: string; endDate: string; startTime: string; endTime: string; weekly: boolean; teachingOnly: boolean; courseId?: string }
+export interface NewCourseInput extends Metadata { label: string; type: string; date: string; endDate: string; startTime: string; endTime: string; endDay?: string; color?: string; weekly: boolean; teachingOnly: boolean; courseId?: string }
 export function createCourse(state: AppState, input: NewCourseInput): AppState {
   if (!input.title.trim()) throw new Error('A course name is required.');
   if (!date(input.date).isValid || input.weekly && (!date(input.endDate).isValid || input.endDate < input.date)) throw new Error('Choose a valid date range.');
   const zone = state.settings.timezone;
-  wallTime(input.date, input.startTime, zone); wallTime(input.date, input.endTime, zone);
-  if (input.endTime <= input.startTime) throw new Error('The end time must be later than the start time.');
+  const endDay = input.endDay ?? input.date;
+  if (!date(endDay).isValid || date(wallTime(endDay, input.endTime, zone)).toMillis() <= date(wallTime(input.date, input.startTime, zone)).toMillis()) throw new Error('The end time must be later than the start time.');
   const next = structuredClone(state), courseId = input.courseId ?? uid(), sessionId = uid(), eventUid = uid();
-  if (!input.courseId) next.courses.push({ id: courseId, name: input.title.trim(), label: input.label, type: input.type, location: input.location, instructor: input.instructor, notes: input.notes, visible: true });
+  if (!input.courseId) next.courses.push({ id: courseId, name: input.title.trim(), label: input.label, type: input.type, location: input.location, instructor: input.instructor, notes: input.notes, visible: true, ...(input.color ? { color: input.color } : {}) });
   const calendar = new ICAL.Component(['vcalendar', [], []]); calendar.addPropertyWithValue('version', '2.0');
   const event = new ICAL.Event(); event.uid = eventUid; event.summary = input.title; event.location = input.location; event.description = input.notes;
-  const start = ICAL.Time.fromString(`${input.date}T${input.startTime}:00`, undefined), end = ICAL.Time.fromString(`${input.date}T${input.endTime}:00`, undefined);
+  const start = ICAL.Time.fromString(`${input.date}T${input.startTime}:00`, undefined), end = ICAL.Time.fromString(`${endDay}T${input.endTime}:00`, undefined);
   event.startDate = start; event.endDate = end;
   event.component.getFirstProperty('dtstart')!.setParameter('tzid', zone);
   event.component.getFirstProperty('dtend')!.setParameter('tzid', zone);
@@ -295,7 +295,7 @@ export function createCourse(state: AppState, input: NewCourseInput): AppState {
     while (day <= input.endDate) { if (!isTeachingDay(day, state)) times.push(ICAL.Time.fromString(`${day}T${input.startTime}:00`, undefined)); day = addDays(day, 7); }
     if (times.length) { excluded.setValues(times); excluded.setParameter('tzid', zone); event.component.addProperty(excluded); }
   }
-  next.sessions.push({ id: sessionId, courseId, baselines: [{ uid: eventUid, ical: calendar.toString() }], overrides: [] });
+  next.sessions.push({ id: sessionId, courseId, ...(input.courseId ? { type: input.type } : {}), baselines: [{ uid: eventUid, ical: calendar.toString() }], overrides: [] });
   return next;
 }
 export function genericWeek(state: AppState, referenceDate: string): Occurrence[] {

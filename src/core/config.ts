@@ -25,7 +25,7 @@ export function validateConfig(value: unknown): AppState {
   const sources = value.sources as Record<string, unknown>[], courses = value.courses as Record<string, unknown>[], sessions = value.sessions as Record<string, unknown>[], extras = value.extras as Record<string, unknown>[], academics = value.academics as Record<string, unknown>[];
   const sourceIds = ids(sources, 'Source'), courseIds = ids(courses, 'Course'), sessionIds = ids(sessions, 'Session'); ids(extras, 'Extra'); const academicIds = ids(academics, 'Academic year');
   for (const s of sources) { str(s.name, 'source name'); str(s.content, 'source content', 20_000_000); datetime(s.importedAt, 'import date'); }
-  for (const c of courses) { for (const key of ['name', 'label', 'type', 'location', 'instructor', 'notes']) str(c[key], key); boolean(c.visible, 'course visibility'); optionalText(c, ['importedName']); if (c.deleted !== undefined) boolean(c.deleted, 'course deletion'); }
+  for (const c of courses) { for (const key of ['name', 'label', 'type', 'location', 'instructor', 'notes']) str(c[key], key); boolean(c.visible, 'course visibility'); optionalText(c, ['importedName']); if (c.deleted !== undefined) boolean(c.deleted, 'course deletion'); if (c.grouped !== undefined) boolean(c.grouped, 'course grouping'); if (c.color !== undefined) assert(typeof c.color === 'string' && /^#[\da-f]{6}$/i.test(c.color), 'course color must be a six-digit hex color.'); }
   for (const s of sessions) {
     assert(courseIds.has(s.courseId), 'a session references a missing course.'); assert(s.sourceId === undefined || sourceIds.has(s.sourceId), 'a session references a missing source.');
     list(s.baselines, 'baselines'); list(s.overrides, 'session overrides');
@@ -51,6 +51,7 @@ export function validateConfig(value: unknown): AppState {
       assert(o.patch.mode === undefined || ['preserve', 'weekly'].includes(String(o.patch.mode)), 'invalid repeating mode.'); if (o.patch.teachingOnly !== undefined) boolean(o.patch.teachingOnly, 'teaching constraint');
     }
     if (s.deleted !== undefined) boolean(s.deleted, 'session deletion'); if (s.removed !== undefined) boolean(s.removed, 'source removal');
+    if (s.type !== undefined) str(s.type, 'session type', 100);
     if (s.weekdays !== undefined) assert(Array.isArray(s.weekdays) && s.weekdays.length > 0 && s.weekdays.every(v => Number.isInteger(v) && v >= 1 && v <= 7) && new Set(s.weekdays).size === s.weekdays.length, 'invalid weekday session filter.');
   }
   object(value.exceptions);

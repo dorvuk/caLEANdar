@@ -18,14 +18,18 @@ const result = await page.evaluate(async content => {
   const revision = await invoke('save_state', { content, expectedRevision: before.revision, reason: 'Native integration test' });
   let rejected = false;
   try { await invoke('save_state', { content: '{broken', expectedRevision: revision, reason: 'Invalid import' }); } catch { rejected = true; }
+  const currentRevision = await invoke('save_state', { content, expectedRevision: revision, reason: 'Known recovery baseline' });
   const after = await invoke('load_state');
   const backups = await invoke('list_backups');
   if (backups.some(b => 'content' in b)) throw new Error('Snapshot listing must return metadata only');
   if (backups.length) JSON.parse(await invoke('read_backup', { id: backups[0].id }));
-  return { revision, rejected, content: after.content, backups: backups.length };
+  return { revision: currentRevision, rejected, content: after.content, backups: backups.length };
 }, JSON.stringify(imported));
 if (!result.rejected || JSON.stringify(JSON.parse(result.content)) !== JSON.stringify(imported)) throw new Error('Native persistence verification failed');
 await page.reload(); await page.waitForSelector('.app');
+await page.evaluate(() => document.fonts.load('14px "Pixelify Sans"'));
+if (!(await page.locator('.app').evaluate(el => getComputedStyle(el).fontFamily)).includes('Pixelify Sans') || await page.locator('.fc-timegrid-allday').count()) throw new Error('Native font or all-day layout is incorrect');
+await page.getByRole('button', { name: 'Jump to date', exact: true }).click();
 await page.getByRole('textbox', { name: 'Jump to date' }).fill('2026-10-05');
 await page.locator('.fc-event').filter({ hasText: 'Algorithms — Lectures' }).waitFor();
 const algorithms = page.locator('.fc-event').filter({ hasText: 'Algorithms — Lectures' });
@@ -50,6 +54,22 @@ const render = await page.evaluate(async () => {
   return { width: canvas.width, size: blob.size };
 });
 if (render.width !== 1240 || render.size < 10_000 || errors.length) throw new Error(`Native render failed: ${JSON.stringify({render, errors})}`);
-await writeFile('test-results/native-smoke.json', JSON.stringify({ persistence: { revision: result.revision, rejectedMalformed: result.rejected, backups: result.backups }, render, errors }, null, 2));
-console.log('Native WebView2 + SQLite persistence, reload, recurrence edit and PNG canvas: passed.');
+await page.getByRole('button', { name: 'Close dialog' }).click();
+const grouped = await readFile('test-results/grouped-configuration.json', 'utf8');
+await page.evaluate(async content => {
+  const invoke = window.__TAURI_INTERNALS__.invoke;
+  const before = await invoke('load_state');
+  await invoke('save_state', { content, expectedRevision: before.revision, reason: 'Native grouped color test' });
+}, grouped);
+await page.reload(); await page.waitForSelector('.app');
+await page.getByRole('button', { name: 'Jump to date', exact: true }).click();
+await page.getByRole('textbox', { name: 'Jump to date' }).fill('2026-10-05');
+const groupEvents = page.locator('.fc-event').filter({ hasText: 'Algorithms' });
+await groupEvents.first().waitFor();
+const colors = await groupEvents.evaluateAll(events => events.map(el => getComputedStyle(el).borderColor));
+if (colors.length !== 2 || colors[0] !== colors[1] || await groupEvents.filter({ hasText: 'Laboratory' }).count() !== 1 || await groupEvents.filter({ hasText: 'Lecture' }).count() !== 1) throw new Error('Native group color/types did not persist');
+if (errors.length) throw new Error(`Native UI errors: ${errors.join(', ')}`);
+await page.screenshot({ path: 'test-results/native-refined-calendar.png' });
+await writeFile('test-results/native-smoke.json', JSON.stringify({ persistence: { revision: result.revision, rejectedMalformed: result.rejected, backups: result.backups }, render, grouped: { events: colors.length, borderColor: colors[0] }, errors }, null, 2));
+console.log('Native WebView2 + SQLite persistence, reload, recurrence edit, PNG, pixel font and grouped course colors: passed.');
 await browser.close();

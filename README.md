@@ -7,7 +7,7 @@ A local-first university calendar for Windows and macOS. A quiet, monochrome int
 On this Windows machine, the built installer is:
 
 ```
-src-tauri/target/release/bundle/nsis/caLEANdar_1.0.0_x64-setup.exe
+src-tauri/target/release/bundle/nsis/caLEANdar_1.0.1_x64-setup.exe
 ```
 
 The standalone application is `src-tauri/target/release/caleandar.exe`. The application needs the Microsoft WebView2 runtime, normally present on Windows 10/11. The installer includes the bootstrapper for machines that need it; installing a missing runtime requires an internet connection. Once the runtime is installed, caLEANdar runs completely offline.
@@ -46,9 +46,11 @@ macOS bundles appear under `src-tauri/target/release/bundle/macos` and `bundle/d
 3. Set a new weekly day by changing the editor's date to that weekday. A Friday moved to Monday moves to Monday of its original ISO week. It replaces the Friday position. The original occurrence identity is retained.
 4. Individual edits and cancellations have higher precedence than later recurring edits. To clear one, select **Clear this exception**, or use **Course details → Individual exceptions → Restore**. **Use original for this date** bypasses session edits for that occurrence. **Reset whole session** clears its recurring edits, exceptions, and extra occurrences; course names/groupings/default metadata remain separate.
 5. To add an extra occurrence, edit the date/time in the event panel and choose **Add extra at these times**. This creates a deliberate extra, with its own identity.
-6. Use **New course** for standalone courses or personal activities. Course details lets you rename, reorder, merge courses, move or separate sessions, and add additional weekly meetings. A recurring source with multiple weekdays can be separated into independent weekday sessions, with its exceptions retained. Hiding a course preserves it. Removing a course/session requires confirmation and can be reversed in **Settings → Recovery**.
-7. Navigate with the mini calendar, date input, Today, and previous/next controls. Keyboard shortcuts: `N` new course, `T` today, `←` / `→` previous/next period. Shortcuts are disabled while typing or editing.
+6. Use **New course** for standalone courses or personal activities, or drag across time slots to prefill the exact selected start and end. Click a course in the sidebar to change its color, name, or other defaults. **Group lectures, labs & tutorials** lets you select separate courses and put their sessions under a shared name/color; each session retains its type, original identity, and edits. Session types can also be changed individually. Course details lets you reorder, move or separate sessions, and add additional weekly meetings. A recurring source with multiple weekdays can be separated into independent weekday sessions, with its exceptions retained. Hiding a course preserves it. Removing a course/session requires confirmation and can be reversed in **Settings → Recovery**.
+7. Navigate with the sidebar mini calendar, the dated button's calendar picker, Today, and previous/next controls. Keyboard shortcuts: `N` new course, `T` today, `←` / `→` previous/next period. Shortcuts are disabled while typing, editing, or using the date picker. Week/day views have no all-day row; imported all-day events remain available in Month view and PNG exports.
 8. **Settings** controls appearance, time range, weekends, calendar timezone, labels, default view, and course types. Font sizes, density, and light/dark appearance persist. Floating imports and recurring edits use this timezone's wall clock; changing it reinterprets those times. Zoned imports and explicit occurrence times retain their instants.
+
+The default pixel font is [Pixelify Sans](https://github.com/google/fonts/tree/main/ofl/pixelifysans), bundled locally and embedded in PNG rendering. It requires no font download or installation. Its [SIL Open Font License](public/licenses/PixelifySans-OFL.txt) is included in the application. Individual course colors persist and are included in both PNG modes and JSON transfers; courses without a color follow the theme accent. Updating from 1.0.0 uses the same database and keeps existing courses and settings.
 
 ## Reimporting
 
