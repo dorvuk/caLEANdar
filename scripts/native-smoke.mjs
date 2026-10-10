@@ -27,8 +27,8 @@ const result = await page.evaluate(async content => {
 }, JSON.stringify(imported));
 if (!result.rejected || JSON.stringify(JSON.parse(result.content)) !== JSON.stringify(imported)) throw new Error('Native persistence verification failed');
 await page.reload(); await page.waitForSelector('.app');
-await page.evaluate(() => document.fonts.load('14px "Pixelify Sans"'));
-if (!(await page.locator('.app').evaluate(el => getComputedStyle(el).fontFamily)).includes('Pixelify Sans') || await page.locator('.fc-timegrid-allday').count()) throw new Error('Native font or all-day layout is incorrect');
+await page.evaluate(() => document.fonts.load('14px "Minecraft"'));
+if (!(await page.locator('.app').evaluate(el => getComputedStyle(el).fontFamily)).includes('Minecraft') || await page.locator('.fc-timegrid-allday').count()) throw new Error('Native font or all-day layout is incorrect');
 await page.getByRole('button', { name: 'Jump to date', exact: true }).click();
 await page.getByRole('textbox', { name: 'Jump to date' }).fill('2026-10-05');
 await page.locator('.fc-event').filter({ hasText: 'Algorithms — Lectures' }).waitFor();

@@ -3,7 +3,8 @@ import { expandCalendar, genericWeek } from './engine';
 import { eventLabels } from './labels';
 import type { AppState, Occurrence } from './model';
 import { courseColors } from './colors';
-import pixelFont from '../assets/fonts/PixelifySans.ttf?url&inline';
+import pixelFont from '../assets/fonts/Minecraft.otf?url&inline';
+import pixelFontBold from '../assets/fonts/Minecraft-Bold.otf?url&inline';
 import brandLogo from '../../assets/transp.png?url&inline';
 
 export interface PngOptions { week: string; generic: boolean; weekends: boolean; minTime: string; maxTime: string; scale: number }
@@ -23,7 +24,7 @@ export function layoutOverlaps(segments: Segment[]): Segment[] {
   finish(); return sorted;
 }
 function wrap(text: string, width: number, font: number): string[] {
-  const max = Math.max(2, Math.floor(width / (font * .61))), lines: string[] = [];
+  const max = Math.max(2, Math.floor(width / (font * .8))), lines: string[] = [];
   for (const word of text.split(/\s+/)) {
     if (lines.length && lines.at(-1)!.length + word.length + 1 <= max) lines[lines.length - 1] += ` ${word}`;
     else { for (let i = 0; i < word.length; i += max) lines.push(word.slice(i, i + max)); }
@@ -64,8 +65,8 @@ export function renderTimetableSvg(state: AppState, options: PngOptions): { svg:
   if (height > 16_000) throw new Error('These labels need a very tall image. Use shorter labels, a smaller event font, or export a narrower time range.');
   const accent = state.settings.accent, text = state.settings.theme === 'dark' ? '#eef2eb' : '#1c2922', bg = state.settings.theme === 'dark' ? '#171e1a' : '#fafbf7';
   const surface = state.settings.theme === 'dark' ? '#252f28' : '#eef2e9', stroke = state.settings.theme === 'dark' ? '#4c5c51' : '#cdd5c8';
-  const fontStyle = state.settings.font === 'mono' ? `<style>@font-face { font-family: 'Pixelify Sans'; src: url('${pixelFont}') format('truetype'); font-weight: 400 700; }</style>` : '';
-  const family = state.settings.font === 'mono' ? 'Pixelify Sans, sans-serif' : 'Arial, sans-serif';
+  const fontStyle = state.settings.font === 'mono' ? `<style>@font-face { font-family: 'Minecraft'; src: url('${pixelFont}') format('opentype'); font-weight: 400; } @font-face { font-family: 'Minecraft'; src: url('${pixelFontBold}') format('opentype'); font-weight: 700; }</style>` : '';
+  const family = state.settings.font === 'mono' ? 'Minecraft, Consolas, monospace' : 'Arial, sans-serif';
   const eventColors = (e: Occurrence) => { const color = state.courses.find(c => c.id === e.courseId)?.color; return color ? courseColors(color, state.settings.theme === 'dark') : { background: surface, border: accent }; };
   const out: string[] = [`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${fontStyle}<rect width="100%" height="100%" fill="${bg}"/><g font-family="${family}" fill="${text}">`];
   out.push(`${state.settings.theme === 'dark' ? '<rect x="24" y="16" width="28" height="28" fill="#ffd0d7"/>' : ''}<image x="24" y="16" width="28" height="28" href="${brandLogo}" style="image-rendering:pixelated"/><text x="62" y="38" font-size="18" font-weight="bold">caLEANdar</text>`);

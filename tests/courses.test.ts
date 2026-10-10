@@ -49,7 +49,7 @@ it('validates and includes course colors in both export modes without changing o
   for (const generic of [false, true]) {
     const image = renderTimetableSvg(state, { week: '2026-10-05', generic, weekends: false, minTime: '07:00', maxTime: '21:00', scale: 1 });
     expect(image.svg).toContain(`fill="${colors.background}"`); expect(image.svg).toContain(`stroke="${colors.border}"`);
-    expect(image.svg).toContain('Pixelify Sans'); expect(image.svg).toContain('data:font/ttf;base64,');
+    expect(image.svg).toContain('Minecraft'); expect(image.svg).toContain('data:font/otf;base64,');
   }
   state.courses[0].color = 'red'; expect(() => serializeConfig(state)).toThrow('course color');
 });

@@ -19,9 +19,9 @@ async function selectFriday(page: Page, first: string, last: string) {
 }
 test('calendar selection preserves long and short durations; pixel font, compact courses and clear date navigation', async ({ page }) => {
   await sample(page);
-  await page.evaluate(() => document.fonts.load('14px "Pixelify Sans"'));
-  expect(await page.locator('.app').evaluate(el => getComputedStyle(el).fontFamily)).toContain('Pixelify Sans');
-  expect(await page.evaluate(() => [...document.fonts].some(font => font.family === 'Pixelify Sans' && font.status === 'loaded'))).toBe(true);
+  await page.evaluate(() => document.fonts.load('14px "Minecraft"'));
+  expect(await page.locator('.app').evaluate(el => getComputedStyle(el).fontFamily)).toContain('Minecraft');
+  expect(await page.evaluate(() => [...document.fonts].some(font => font.family === 'Minecraft' && font.status === 'loaded'))).toBe(true);
   await expect(page.locator('.fc-timegrid-divider, .fc-timegrid-allday, .local-status, .calendar-footer, .shortcut')).toHaveCount(0);
   await expect(page.locator('.import-button')).toHaveText('Import timetable');
   await expect(page.locator('.add-course')).toHaveText('New course');

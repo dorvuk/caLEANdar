@@ -9,14 +9,14 @@ A local-first university calendar for Windows and macOS. A quiet, monochrome int
 On this Windows machine, the built installer is:
 
 ```
-src-tauri/target/release/bundle/nsis/caLEANdar_1.0.2_x64-setup.exe
+src-tauri/target/release/bundle/nsis/caLEANdar_1.0.4_x64-setup.exe
 ```
 
 The standalone application is `src-tauri/target/release/caleandar.exe`. The application needs the Microsoft WebView2 runtime, normally present on Windows 10/11. The installer includes the bootstrapper for machines that need it; installing a missing runtime requires an internet connection. Once the runtime is installed, caLEANdar runs completely offline.
 
 The first launch opens an empty calendar. Select **Preview the sample timetable** to try a synthetic winter timetable, including a source exception and individually listed weekly classes. The same file is at [samples/fri-sample.ics](samples/fri-sample.ics). Its courses and instructors are illustrative.
 
-Branding comes from [assets/opaq.png](assets/opaq.png) for desktop icons and the browser favicon, and [assets/transp.png](assets/transp.png) for the sidebar, loading/empty states, and PNG exports. Regenerate platform icons after replacing the opaque asset with `npm run tauri -- icon assets/opaq.png`.
+Branding comes from [assets/opaq.png](assets/opaq.png) for desktop icons and the browser favicon, and [assets/transp.png](assets/transp.png) for the sidebar, loading/empty states, and PNG exports. Desktop builds automatically regenerate platform icons from the current opaque asset. Windows installers also refresh existing desktop and Start menu shortcuts with a versioned icon file and notify Explorer, so upgrades pick up branding changes without clearing the system icon cache. Installer and uninstaller icons use the same opaque artwork. To regenerate icons separately, run `npm run tauri -- icon assets/opaq.png`.
 
 ## Develop and build
 
@@ -54,7 +54,7 @@ macOS bundles appear under `src-tauri/target/release/bundle/macos` and `bundle/d
 7. Navigate with the sidebar mini calendar, the dated button's calendar picker, Today, and previous/next controls. Keyboard shortcuts: `N` new course, `T` today, `←` / `→` previous/next period. Shortcuts are disabled while typing, editing, or using the date picker. Week/day views have no all-day row; imported all-day events remain available in Month view and PNG exports.
 8. **Settings** controls appearance, time range, weekends, calendar timezone, labels, default view, and course types. Font sizes, density, and light/dark appearance persist. Floating imports and recurring edits use this timezone's wall clock; changing it reinterprets those times. Zoned imports and explicit occurrence times retain their instants.
 
-The default pixel font is [Pixelify Sans](https://github.com/google/fonts/tree/main/ofl/pixelifysans), bundled locally and embedded in PNG rendering. It requires no font download or installation. Its [SIL Open Font License](public/licenses/PixelifySans-OFL.txt) is included in the application. Individual course colors persist and are included in both PNG modes and JSON transfers; courses without a color follow the theme accent. Updating from 1.0.0 uses the same database and keeps existing courses and settings.
+The default font is [Minecraft](https://github.com/IdreesInc/Minecraft-Font), an open-source recreation of the game's UI typeface, bundled locally in regular and bold and embedded in PNG rendering. It requires no font download or installation. Its [SIL Open Font License](public/licenses/Minecraft-OFL.txt) is included in the application. Characters outside the font's Latin glyph set use a local monospace fallback. Individual course colors persist and are included in both PNG modes and JSON transfers; courses without a color follow the theme accent. Updating from earlier versions uses the same database and keeps existing courses and settings.
 
 ## Reimporting
 

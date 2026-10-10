@@ -1,11 +1,12 @@
 {
   "name": "caleandar",
   "private": true,
-  "version": "1.0.2",
+  "version": "1.0.4",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc -b && vite build",
+    "build:desktop-assets": "node scripts/prepare-icons.mjs && npm run build",
     "preview": "vite preview --host 127.0.0.1",
     "typecheck": "tsc -b",
     "test": "vitest run",
