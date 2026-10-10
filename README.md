@@ -41,7 +41,15 @@ powershell -ExecutionPolicy Bypass -File .\scripts\desktop.ps1 test
 
 For frontend development, `npm run dev` opens a browser preview at `http://127.0.0.1:1420`. This preview uses browser storage and browser downloads. The installed desktop app uses SQLite and native file dialogs. Preview data is independent of desktop data; transfer it using a configuration export.
 
-macOS bundles appear under `src-tauri/target/release/bundle/macos` and `bundle/dmg`. Windows installers appear under `bundle/nsis`. Builds are unsigned; macOS distribution requires your own Apple signing/notarization credentials. Installed applications require neither Node nor Rust.
+macOS bundles appear under `src-tauri/target/release/bundle/macos` and `bundle/dmg`. Windows installers appear under `bundle/nsis`. Windows builds are unsigned; macOS builds use an ad-hoc signature, verified alongside the disk image in CI. Ad-hoc signing does not identify an Apple-approved developer or notarize the app. Public macOS distribution without a Gatekeeper override requires your own Apple Developer ID signing and notarization credentials; `APPLE_SIGNING_IDENTITY` can override the default ad-hoc identity. Installed applications require neither Node nor Rust.
+
+For a macOS build downloaded from this repository's GitHub Actions, copy `caLEANdar.app` into Applications. If macOS blocks it, try **System Settings → Privacy & Security → Open Anyway**. If it reports that the app is damaged, and you trust that repository download, remove only this app's download quarantine in Terminal:
+
+```sh
+xattr -rd com.apple.quarantine "/Applications/caLEANdar.app"
+```
+
+Then open the app again. This does not repair a corrupt download or invalid signature. If the warning persists, re-download the artifact and check the installed bundle with `codesign --verify --deep --strict --verbose=2 "/Applications/caLEANdar.app"`. See [Tauri's macOS signing documentation](https://v2.tauri.app/distribute/sign/macos/) for signing and notarization setup.
 
 ## Everyday use
 

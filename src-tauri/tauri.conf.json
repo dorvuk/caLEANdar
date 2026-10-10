@@ -20,6 +20,6 @@
     "shortDescription": "A little order for your university week.",
     "category": "Productivity",
     "windows": { "nsis": { "displayLanguageSelector": false, "installerIcon": "icons/icon.ico", "uninstallerIcon": "icons/icon.ico", "installerHooks": "windows/installer-hooks.nsh" }, "webviewInstallMode": { "type": "embedBootstrapper" } },
-    "macOS": { "minimumSystemVersion": "11.0" }
+    "macOS": { "minimumSystemVersion": "11.0", "signingIdentity": "-" }
   }
 }

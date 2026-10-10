@@ -18,6 +18,15 @@ jobs:
       - run: npm test
       - run: cargo test --manifest-path src-tauri/Cargo.toml
       - run: npm run desktop:build
+      - name: Verify macOS bundle signature and disk image
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          codesign --verify --deep --strict --verbose=2 "src-tauri/target/release/bundle/macos/caLEANdar.app"
+          for image in src-tauri/target/release/bundle/dmg/*.dmg; do
+            hdiutil verify "$image"
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: caleandar-${{ matrix.os }}
